@@ -53,13 +53,19 @@ def name(message):
 
     conn = sqlite3.connect('db/database.db', check_same_thread=False)
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO users (name, user_name) VALUES (?, ?)', (name, username))
-    conn.commit()
+    # Проверяем, есть ли уже такой user_name
+    cursor.execute('SELECT id FROM users WHERE user_name = ?', (username,))
+    result = cursor.fetchone()
+    if result:
+        bot.send_message(message.chat.id, "Вы уже зарегистрированы!")
+    else:
+        cursor.execute('INSERT INTO users (name, user_name) VALUES (?, ?)', (name, username))
+        conn.commit()
+        print(f"Добавлен пользователь: {name}, {username}")
+        bot.send_message(message.chat.id, "Пользователь зарегистрирован!")
+
     cursor.close()
     conn.close()
-
-    print(f"Добавлен пользователь: {name}, {username}")
-    bot.send_message(message.chat.id, "Пользователь зарегистрирован!")
 
     markup = types.ReplyKeyboardMarkup()
     btn1 = types.KeyboardButton('Помощь')
@@ -101,11 +107,11 @@ def handle_query(message, query_type):
         
         # Формируем промпт в зависимости от типа запроса
         if query_type == 'Поиск фильмов':
-            prompt = f"Рекомендуй фильм по следующим ключевым словам: {message.text} сделай формат текста без символов"
+            prompt = f"Рекомендуй фильм по следующим ключевым словам: {message.text} сделай формат текста без символов, название и короткое описание, несколько фильмов"
         elif query_type == 'Поиск игр':
-            prompt = f"Рекомендуй игру по следующим ключевым словам: {message.text} сделай формат текста без символов"
+            prompt = f"Рекомендуй игру по следующим ключевым словам: {message.text} сделай формат текста без символов, название и короткое описание, несколько игр"
         elif query_type == 'Поиск книг':
-            prompt = f"Рекомендуй книгу по следующим ключевым словам: {message.text}  сделай формат текста без символов"
+            prompt = f"Рекомендуй книгу по следующим ключевым словам: {message.text}  сделай формат текста без символов, название и короткое описание, несколько книг"
         else:
             prompt = message.text
             
@@ -145,6 +151,17 @@ def query_openrouter(prompt):
     except Exception as e:
         print(f"Ошибка при запросе к OpenRouter API: {e}")
         return "Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте позже."
+
+def insert_api_key(api_key):
+    conn = sqlite3.connect('db/database.db', check_same_thread=False)
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO api (Api_key) VALUES (?)', (api_key,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# --- Вставка ключа в таблицу api ---
+insert_api_key('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')
 
 print('Бот запущен!')
 print(os.path.abspath('db/database.db'))
