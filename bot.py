@@ -29,7 +29,11 @@ def send_welcome(message):
     cursor.execute('''CREATE TABLE IF NOT EXISTS users 
                (id INTEGER PRIMARY KEY AUTOINCREMENT, 
                 name TEXT, 
-                username TEXT)''')
+                user_name TEXT)''')
+    
+    # Создание таблицы (в SQLite INTEGER PRIMARY KEY работает как auto_increment)
+    cursor.execute('''CREATE TABLE IF NOT EXISTS api
+               (Api_key VARCHAR)''')
 
     # Сохранение изменений
     conn.commit()
@@ -43,17 +47,13 @@ def send_welcome(message):
 
 def name(message):
     user_data[message.chat.id] = {'name': message.text.strip()}
-    bot.send_message(message.chat.id, "Введите username вашего телеграмм:")
-    bot.register_next_step_handler(message, username)
-
-def username(message):
-    user_data[message.chat.id]['username'] = message.text.strip()
+    user_data[message.chat.id]['user_name'] = message.from_user.username
     name = user_data[message.chat.id]['name']
-    username = user_data[message.chat.id]['username']
+    username = user_data[message.chat.id]['user_name']
 
     conn = sqlite3.connect('db/database.db', check_same_thread=False)
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO users (name, username) VALUES (?, ?)', (name, username))
+    cursor.execute('INSERT INTO users (name, user_name) VALUES (?, ?)', (name, username))
     conn.commit()
     cursor.close()
     conn.close()
@@ -68,7 +68,7 @@ def username(message):
     btn3 = types.KeyboardButton('Поиск игр')
     btn4 = types.KeyboardButton('Поиск книг')
     markup.row(btn2, btn3, btn4)
-    welcome_text = f"Привет, {message.from_user.first_name}! Я бот с искусственным интеллектом.👾 \nДля подборки фильмов, игр и книг. По ключевым словам!"
+    welcome_text = f"Привет, {message.from_user.first_name}! Я бот с искусственным интеллектом.👾 \nДля подборки 🎥фильмов, 🎮игр и 📚книг. По ключевым словам!"
     bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
     bot.register_next_step_handler(message, on_click)
 
@@ -76,22 +76,22 @@ def username(message):
 def on_click(message):
     #Поиск фильмов
     if message.text == 'Поиск фильмов':
-        movies_text = "Введите несколько ключевых слов, чтобы я мог порекомендывать вам фильм на вечер!"
+        movies_text = "🎥Введите несколько ключевых слов, чтобы я мог порекомендывать вам фильм на вечер!"
         bot.send_message(message.chat.id, movies_text)
         bot.register_next_step_handler(message, lambda msg: handle_query(msg, message.text))
     #Поиск игр
     elif message.text == 'Поиск игр':
-        games_text = "Введите несколько ключевых слов, чтобы я мог порекомендывать вам увлекательную игру!"
+        games_text = "🎮Введите несколько ключевых слов, чтобы я мог порекомендывать вам увлекательную игру!"
         bot.send_message(message.chat.id, games_text)
         bot.register_next_step_handler(message, lambda msg: handle_query(msg, message.text))
     #Поиск книг
     elif message.text == 'Поиск книг':
-        books_text = "Введите несколько ключевых слов, чтобы я мог порекомендывать вам интересную книгу для прочтения!"
+        books_text = "📚Введите несколько ключевых слов, чтобы я мог порекомендывать вам интересную книгу для прочтения!"
         bot.send_message(message.chat.id, books_text)
         bot.register_next_step_handler(message, lambda msg: handle_query(msg, message.text))
     #Помощь
     else:
-        help_text = "Я бот с искусственным интеллектом. Для подборки фильмов, игр и книг. По ключевым словам! \nИспользуй кнопки для поиска фильмов, игр или книг по ключевым словам."
+        help_text = "Я бот с искусственным интеллектом.👾 \nДля подборки фильмов, игр и книг. По ключевым словам! \nИспользуй кнопки для поиска 🎥фильмов, 🎮игр или 📚книг по ключевым словам."
         bot.send_message(message.chat.id, help_text)
 
 def handle_query(message, query_type):
@@ -101,11 +101,11 @@ def handle_query(message, query_type):
         
         # Формируем промпт в зависимости от типа запроса
         if query_type == 'Поиск фильмов':
-            prompt = f"Рекомендуй фильм по следующим ключевым словам: {message.text} сделай формат текста для telegram"
+            prompt = f"Рекомендуй фильм по следующим ключевым словам: {message.text} сделай формат текста без символов"
         elif query_type == 'Поиск игр':
-            prompt = f"Рекомендуй игру по следующим ключевым словам: {message.text} сделай формат текста для telegram"
+            prompt = f"Рекомендуй игру по следующим ключевым словам: {message.text} сделай формат текста без символов"
         elif query_type == 'Поиск книг':
-            prompt = f"Рекомендуй книгу по следующим ключевым словам: {message.text} сделай формат текста для telegram"
+            prompt = f"Рекомендуй книгу по следующим ключевым словам: {message.text}  сделай формат текста без символов"
         else:
             prompt = message.text
             
@@ -149,9 +149,3 @@ def query_openrouter(prompt):
 print('Бот запущен!')
 print(os.path.abspath('db/database.db'))
 bot.polling(none_stop=True)
-
-
-
-
-
-
